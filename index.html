@@ -39,6 +39,33 @@
             padding: 40px 20px;
         }
 
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+            
+            h1 {
+                font-size: 1.8rem !important;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem !important;
+                margin-bottom: 20px !important;
+            }
+            
+            .map-container {
+                padding: 15px !important;
+            }
+            
+            .legend {
+                top: 10px !important;
+                right: 10px !important;
+                font-size: 11px !important;
+                padding: 10px !important;
+            }
+        }
+
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -169,7 +196,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Our Projects</h1>
+        <h1>Our Global Projects</h1>
         <p class="subtitle">Click on a highlighted country to learn more about our work</p>
         
         <div class="map-container">
@@ -292,7 +319,7 @@
                         const projectId = countryMapping[projectKey];
                         const url = countryLinks[projectId];
                         if (url) {
-                            window.open(url, '_blank');  // Navigate to project page
+                            window.location.href = url;  // Navigate to project page
                         }
                     }
                 });
@@ -327,7 +354,7 @@
                 .on("click", function() {
                     const url = countryLinks['tuvalu'];
                     if (url) {
-                        window.open(url, '_blank');  // Navigate to Tuvalu project page
+                        window.location.href = url;  // Navigate to Tuvalu project page
                     }
                 });
 
