@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive World Map - Our Projects</title>
+    <!-- Google Fonts - Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ========================================
+           EQUAL RIGHT BRAND COLORS
+           ======================================== */
+        
+        :root {
+            /* Equal Right brand colors from guidelines */
+            --dark-green: #29361b;          /* Base countries */
+            --light-orange: #dfa25e;        /* Active countries */
+            --dark-orange: #bb6c29;         /* Hover & accents */
+            --cream: #fcfbe3;               /* Text */
+            --ocean-blue: #E3F2FD;          /* Ocean */
+            
+            /* Additional colors */
+            --olive-green: #5f6c38;         /* From brand palette */
+            --yellow: #ffc50b;              /* From brand palette */
+        }
+        
+        /* ======================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--dark-green);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--cream);
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--cream);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .map-container {
+            background: var(--dark-orange);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            border: 4px solid var(--dark-orange);
+        }
+
+        #worldMap {
+            width: 100%;
+            height: 500px;
+            background: var(--ocean-blue);
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .country {
+            fill: var(--dark-green);
+            stroke: #bb6c29;
+            stroke-width: 1;
+            transition: all 0.3s ease;
+        }
+
+        .country.active {
+            fill: var(--light-orange);
+            stroke: #bb6c29;
+            stroke-width: 1.5;
+            cursor: pointer;
+        }
+
+        .country.active:hover {
+            fill: var(--dark-orange);
+            stroke-width: 2;
+        }
+
+        /* Special marker for Tuvalu (tiny island) */
+        .country-marker {
+            fill: var(--light-orange);
+            stroke: var(--dark-orange);
+            stroke-width: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .country-marker:hover {
+            fill: var(--dark-orange);
+            r: 8;
+        }
+
+        .tooltip {
+            position: fixed;
+            background: var(--dark-green);
+            color: var(--cream);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+            border: 1px solid var(--dark-orange);
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .legend {
+            position: absolute;
+            top: 60px;
+            right: 60px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            font-size: 14px;
+            border: 2px solid var(--dark-orange);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+        }
+
+        .legend-color.active {
+            background: var(--light-orange);
+        }
+
+        .legend-color.inactive {
+            background: var(--dark-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Our Global Projects</h1>
+        <p class="subtitle">Click on a highlighted country to learn more about our work</p>
+        
+        <div class="map-container">
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color active"></div>
+                    <span>Active Projects</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color inactive"></div>
+                    <span>Other Countries</span>
+                </div>
+            </div>
+            <div id="worldMap"></div>
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+    </div>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+    <script>
+        // ========================================
+        // HOW TO ADD A NEW COUNTRY
+        // ========================================
+        // STEP 1: Add the country to the countryMapping object below
+        //         Use the EXACT name as it appears on the map (check console.log at bottom)
+        //         Example: 'France': 'france',
+        //
+        // STEP 2: Add the country link to countryLinks object with the full URL
+        //         Example: 'france': 'https://www.equalright.org/france-project',
+        //
+        // That's it! The country will automatically be highlighted and clickable.
+        // ========================================
+
+        // CONFIGURATION - ADD YOUR PROJECT PAGE URLS HERE
+        const countryLinks = {
+            'kenya': 'https://www.equalright.org/climate-commons-fund',
+            'malawi': 'https://www.equalright.org/malawi-task-force',
+            'uk': 'https://www.equalright.org/cashforconservation',
+            'colombia': 'https://www.equalright.org/peace-with-nature',
+            'brazil': 'https://www.equalright.org/solidarity-mutirao',
+            'tuvalu': 'https://www.equalright.org/uc4cj-tuvalu'
+        };
+
+        // Map country names to our project keys
+        // Use the EXACT country name as it appears in the map data
+        const countryMapping = {
+            'Kenya': 'kenya',
+            'Malawi': 'malawi',
+            'United Kingdom': 'uk',
+            'Colombia': 'colombia',
+            'Brazil': 'brazil',
+            'Tuvalu': 'tuvalu'
+        };
+
+        // Set up the SVG
+        const width = document.getElementById('worldMap').clientWidth;
+        const height = 500;
+
+        const svg = d3.select("#worldMap")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // Create projection
+        const projection = d3.geoMercator()
+            .scale(130)
+            .translate([width / 2, height / 1.5]);
+
+        const path = d3.geoPath().projection(projection);
+
+        const tooltip = d3.select("#tooltip");
+
+        // Load and display the world map
+        d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(function(world) {
+            const countries = topojson.feature(world, world.objects.countries);
+
+            // Draw all countries
+            svg.selectAll("path")
+                .data(countries.features)
+                .enter()
+                .append("path")
+                .attr("d", path)
+                .attr("class", d => {
+                    const countryName = d.properties.name;
+                    const isActive = Object.keys(countryMapping).some(key => 
+                        countryName && countryName.includes(key)
+                    );
+                    return isActive ? "country active" : "country";
+                })
+                .attr("data-country", d => d.properties.name)
+                .on("mouseover", function(event, d) {
+                    const countryName = d.properties.name;
+                    const projectKey = Object.keys(countryMapping).find(key => 
+                        countryName && countryName.includes(key)
+                    );
+                    
+                    if (projectKey) {
+                        // Get the bounding box of the SVG element
+                        const svgRect = svg.node().getBoundingClientRect();
+                        const centroid = path.centroid(d);
+                        
+                        tooltip
+                            .style("left", (svgRect.left + centroid[0] + window.scrollX + 10) + "px")
+                            .style("top", (svgRect.top + centroid[1] + window.scrollY - 30) + "px")
+                            .classed("visible", true)
+                            .text(projectKey);
+                    }
+                })
+                .on("mouseout", function() {
+                    tooltip.classed("visible", false);
+                })
+                .on("click", function(event, d) {
+                    const countryName = d.properties.name;
+                    const projectKey = Object.keys(countryMapping).find(key => 
+                        countryName && countryName.includes(key)
+                    );
+                    
+                    if (projectKey) {
+                        const projectId = countryMapping[projectKey];
+                        const url = countryLinks[projectId];
+                        if (url) {
+                            window.location.href = url;  // Navigate to project page
+                        }
+                    }
+                });
+
+            // Add a special marker for Tuvalu (it's too small to see on the map)
+            // Tuvalu coordinates: approximately 179°E, 8°S
+            const tuvaluCoords = projection([179, -8]);
+            
+            // Add marker circle (no label)
+            svg.append("circle")
+                .attr("cx", tuvaluCoords[0])
+                .attr("cy", tuvaluCoords[1])
+                .attr("r", 6)
+                .attr("class", "country-marker")
+                .attr("data-country", "Tuvalu")
+                .on("mouseover", function(event) {
+                    const svgRect = svg.node().getBoundingClientRect();
+                    const cx = parseFloat(d3.select(this).attr("cx"));
+                    const cy = parseFloat(d3.select(this).attr("cy"));
+                    
+                    tooltip
+                        .style("left", (svgRect.left + cx + window.scrollX + 10) + "px")
+                        .style("top", (svgRect.top + cy + window.scrollY - 30) + "px")
+                        .classed("visible", true)
+                        .text("Tuvalu");
+                    d3.select(this).attr("r", 8);
+                })
+                .on("mouseout", function() {
+                    tooltip.classed("visible", false);
+                    d3.select(this).attr("r", 6);
+                })
+                .on("click", function() {
+                    const url = countryLinks['tuvalu'];
+                    if (url) {
+                        window.location.href = url;  // Navigate to Tuvalu project page
+                    }
+                });
+
+            // Log all country names for reference when adding new countries
+            console.log("Available country names:", countries.features.map(d => d.properties.name).sort());
+
+        }).catch(function(error) {
+            console.error("Error loading map:", error);
+            document.getElementById('worldMap').innerHTML = '<p style="padding: 50px; text-align: center; color: #666;">Map is loading... If this message persists, please refresh the page.</p>';
+        });
+    </script>
+</body>
+</html>
