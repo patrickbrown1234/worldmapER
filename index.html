@@ -261,10 +261,11 @@
             .attr("width", width)
             .attr("height", height);
 
-        // Create projection
-        const projection = d3.geoMercator()
-            .scale(130)
-            .translate([width / 2, height / 1.5]);
+      // Adjust scale and position based on screen size
+const isMobile = width < 600;
+const projection = d3.geoMercator()
+    .scale(isMobile ? 100 : 130)
+    .translate([width / 2, isMobile ? height / 1.4 : height / 1.5]);
 
         const path = d3.geoPath().projection(projection);
 
