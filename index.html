@@ -320,7 +320,7 @@ const projection = d3.geoMercator()
                         const projectId = countryMapping[projectKey];
                         const url = countryLinks[projectId];
                         if (url) {
-                            window.location.href = url;  // Navigate to project page
+                            window.open(url, '_blank');  // Navigate to project page
                         }
                     }
                 });
@@ -355,7 +355,7 @@ const projection = d3.geoMercator()
                 .on("click", function() {
                     const url = countryLinks['tuvalu'];
                     if (url) {
-                        window.location.href = url;  // Navigate to Tuvalu project page
+                        window.open(url, '_blank');  // Navigate to Tuvalu project page
                     }
                 });
 
